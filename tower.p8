@@ -163,28 +163,45 @@ function player:update()
 
     -- y axis collisions
     self.vy = self.vy + ay
-    self.y = self.y + self.vy
-    local x1, x2, y1, y2 = self:get_bounds_y()
-    local bx1, by1 = world:to_map(x1, y1)
-    local bx2, by2 = world:to_map(x2, y2)
-    -- todo: squish
-    for i=1, 2 do
-        local by = nil
-        local offset = nil
-        if i == 1 then
-            by, offset = by1, 8 + self.h - 1
-        else
-            by, offset = by2, -1
-        end
-
-        for bx=bx1, bx2 do
-            if world:get(bx, by) ~= 0 then
-                self.vy = 0
-                local bxw, byw = world:from_map(bx, by)
-                self.y = byw + offset
-                self.state = i == 1 and player_states.falling or player_states.on_ground
-                break
+    if abs(self.vy) >= 1 then
+        self.y = self.y + self.vy
+        local x1, x2, y1, y2 = self:get_bounds_y()
+        local bx1, by1 = world:to_map(x1, y1)
+        local bx2, by2 = world:to_map(x2, y2)
+        local on_ceiling = false
+        local on_ground = false
+        for i=1, 2 do
+            local by = nil
+            local offset = nil
+            if i == 1 then
+                by, offset = by1, 8 + self.h - 1
+            else
+                by, offset = by2, -1
             end
+    
+            for bx=bx1, bx2 do
+                if world:get(bx, by) ~= 0 then
+                    self.vy = 0
+                    local bxw, byw = world:from_map(bx, by)
+                    self.y = byw + offset
+                    if i == 1 then
+                        on_ceiling = true
+                    else
+                        on_ground = true
+                    end
+                    break
+                end
+            end
+        end
+    
+        if on_ceiling and on_ground then
+            -- todo: squish
+        elseif on_ceiling then
+            self.state = player_states.falling
+        elseif on_ground then
+            self.state = player_states.on_ground
+        elseif self.state ~= player_states.jumping then
+            self.state = player_states.falling
         end
     end
 
@@ -245,6 +262,9 @@ function _draw()
     world:draw()
     player:draw()
 
-    print("(" .. flr(player.x) .. ", " .. flr(player.y) .. ")", 0, 0, colors.white)
+    cursor(0, 0)
+    color(colors.white)
+    print("(" .. flr(player.x) .. ", " .. flr(player.y) .. ")")
+    print("" .. player.state)
 end
 
