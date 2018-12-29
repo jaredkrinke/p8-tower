@@ -57,6 +57,7 @@ player = {
 
     ay = 5 / 16,
     ay_jump = 1 / 16,
+    vy_min = -2,
     vy_max = 4 + 5 / 16,
 }
 
@@ -151,11 +152,11 @@ function player:update()
             self.state = player_states.jumping
         end
     elseif self.state == player_states.jumping then
-        if self.vy >= -2 then
+        if self.vy >= self.vy_min then
             self.state = player_states.falling
         end
 
-        if jump_held and self.vy < -2 then
+        if jump_held and self.vy < self.vy_min then
             ay = self.ay_jump
         end
     end
